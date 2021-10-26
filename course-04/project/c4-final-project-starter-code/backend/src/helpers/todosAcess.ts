@@ -33,7 +33,7 @@ export class TodosAccess {
         return result.Items as TodoItem[]
     }
 
-    async createTodoItem(userId: string, todoItem): Promise<TodoItem> {
+    async createTodoItem(todoItem): Promise<TodoItem> {
         logger.info(`Creating TodoItem with id ${todoItem.itemId}`);
         const results = await this.docClient.put({
             TableName: this.todosTable,
