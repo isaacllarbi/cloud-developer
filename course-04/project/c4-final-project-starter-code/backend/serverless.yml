@@ -41,34 +41,40 @@ provider:
             - xray:PutTraceSegments
           Resource: "*"
 
-
+ 
 functions:
-
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
   # DONE: Configure this function - 
   # Provide iamRoleStatements property for performing Actions on DynamoDB
   GetTodos:
+    handler: src/lambda/http/getTodos.handler
     events:
       - http:
           method: get
           path: todos
           cors: true
           authorizer: Auth
-    handler: src/lambda/http/getTodos.handler
     iamRoleStatementsInherit: true
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:Query
+          - dynamodb:Scan
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:Scan
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/*
 
   # DONE: Configure this function - 
   # Provide iamRoleStatements property. Decide the Actions and AWS Resource. 
   # To refer to an AWS resource defined in the "Resources" section, you can use "Resource: !GetAtt <resource-name>.Arn"
   # To validate incoming HTTP requests, we have provided the request schemas in function definition below. 
   CreateTodo:
+    handler: src/lambda/http/createTodo.handler
     events:
       - http:
           method: post
@@ -78,7 +84,6 @@ functions:
           request:
             schemas:
               application/json: ${file(models/create-todo-model.json)}
-    handler: src/lambda/http/createTodo.handler
     iamRoleStatementsInherit: true
     iamRoleStatements:
       - Effect: Allow
@@ -129,23 +134,23 @@ functions:
   # Provide property for setting up CORS, Authorizer, iamRoleStatements
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
+    events:
+      - http:
+          method: post
+          path: todos/{todoId}/attachment
+          cors: true
+          authorizer: Auth
     iamRoleStatementsInherit: true
     iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:UpdateItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
       - Effect: Allow
         Action:
           - s3:PutObject
           - s3:GetObject
         Resource: arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*
-    events:
-      - http:
-          method: post
-          cors: true
-          authorizer: Auth
-          path: todos/{todoId}/attachment
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
 resources:
   Resources:
@@ -190,6 +195,7 @@ resources:
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL # What attributes will be copied to an index
+    
 
     # DONE: Complete the bucket properties below. 
     # Do not forget to add the CorsConfiguration propoerty

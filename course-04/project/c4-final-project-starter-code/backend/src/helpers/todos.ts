@@ -5,6 +5,7 @@ import * as uuid from 'uuid'
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest';
 // import { createLogger } from '../utils/logger'
 import { AttachmentUtils } from './attachmentUtils';
+import { TodoUpdate } from '../models/TodoUpdate';
 // import * as createError from 'http-errors'
 
 // DONE: Implement businessLogic
@@ -15,11 +16,12 @@ export async function getTodosForUser(userId: string) {
     return todosAccess.getAllTodoItems(userId)
 }
 
-export async function createTodo(userId: string, createTodoRequest: CreateTodoRequest): Promise<TodoItem> {
+export async function createTodo(userId: string, createTodoRequest: CreateTodoRequest) {
     const itemId = uuid.v4()
-    const todoItem = {
-        userId,
+    const todoItem: TodoItem = {
+        userId: userId,
         todoId: itemId,
+        createdAt: new Date().toISOString(),
         name: createTodoRequest.name,
         dueDate: createTodoRequest.dueDate,
         done: false
@@ -28,16 +30,21 @@ export async function createTodo(userId: string, createTodoRequest: CreateTodoRe
     return await todosAccess.createTodoItem(todoItem)
 }
 
-export async function updateTodo(userId: string, updateTodoRequest: UpdateTodoRequest, todoId: string): Promise<TodoItem> {
-    return await todosAccess.updateTodoItem(userId, updateTodoRequest, todoId)
+export async function updateTodo(userId: string, updateTodoRequest: UpdateTodoRequest, todoId: string): Promise<TodoUpdate> {
+    const todoUpdate: TodoUpdate = {
+        name: updateTodoRequest.name,
+        done: updateTodoRequest.done,
+        dueDate: updateTodoRequest.dueDate
+    }
+    return await todosAccess.updateTodoItem(userId, todoUpdate, todoId)
 }
 
 export async function deleteTodo(userId: string, todoId: string) {
     return await todosAccess.deleteTodoItem(userId, todoId)
 }
 
-export async function createAttachmentPresignedUrl( todoId: string): Promise<string> {
-    const url =await attachmentUtils.getSignedUrl(todoId);
-    
+export async function createAttachmentPresignedUrl(todoId: string, userId: string): Promise<string> {
+    const url = await attachmentUtils.getSignedUrl(todoId, userId);
+
     return url
 }

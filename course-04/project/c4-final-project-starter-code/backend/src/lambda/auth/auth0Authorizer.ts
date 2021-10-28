@@ -16,7 +16,7 @@ const logger = createLogger('auth')
 export const handler = async (event: CustomAuthorizerEvent): Promise<CustomAuthorizerResult> => {
   logger.info('Authorizing a user', event.authorizationToken)
   try {
-    const jwtToken = await verifyToken(event.authorizationToken)
+    const jwtToken: JwtPayload = await verifyToken(event.authorizationToken)
     logger.info('User was authorized', jwtToken)
 
     return {
@@ -56,18 +56,15 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
   const jwt: Jwt = decode(token, { complete: true }) as Jwt
 
   const jwksUrl = 'https://dev-enp-i3nz.us.auth0.com/.well-known/jwks.json'
-  const client = jwksClient({
-    jwksUri: jwksUrl,
-    timeout: 30000 // Defaults to 30s
-  });
+  const client = jwksClient({ jwksUri: jwksUrl });
 
-  const key = await client.getSigningKey(jwt.header.kid);
+  const key: jwksClient.SigningKey = await client.getSigningKey(jwt.header.kid);
 
-  const verifiedToken = verify(token, key.getPublicKey(), { algorithms: ['RS256'] }) as Jwt
+  const verifiedToken = verify(token, key.getPublicKey(), { algorithms: ['RS256'] }) as JwtPayload
 
   // You should implement it similarly to how it was implemented for the exercise for the lesson 5
   // You can read more about how to do this here: https://auth0.com/blog/navigating-rs256-and-jwks/
-  return verifiedToken.payload
+  return verifiedToken
 }
 
 function getToken(authHeader: string): string {
