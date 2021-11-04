@@ -17,6 +17,9 @@ export async function getTodosForUser(userId: string) {
 }
 
 export async function createTodo(userId: string, createTodoRequest: CreateTodoRequest) {
+    //reject user who has created 10 on trial
+    //count number todoItems created
+    //
     const itemId = uuid.v4()
     const todoItem: TodoItem = {
         userId: userId,
